@@ -10,7 +10,7 @@ app = Flask(__name__)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 messages = [
-    {"role": "system", "content": "Odgovarjaj jasno in v jeziku uporabnika."}
+    {"role": "system", "content": "Answer clearly in the user's language."}
 ]
 
 @app.route("/")
