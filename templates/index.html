@@ -1,69 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AI Web Chat</title>
+    <meta charset="UTF-8">
+    <title>AI App</title>
     <style>
         body {
             font-family: Arial;
-            background: #0f172a;
-            color: white;
-            text-align: center;
-        }
-
-        #chat {
-            width: 60%;
-            margin: auto;
-            height: 400px;
-            overflow-y: scroll;
-            border: 1px solid #333;
-            padding: 10px;
-            text-align: left;
+            max-width: 700px;
+            margin: 50px auto;
         }
 
         input {
-            width: 50%;
+            width: 80%;
             padding: 10px;
-            margin-top: 10px;
         }
 
         button {
             padding: 10px;
         }
 
-        .user { color: #60a5fa; margin: 5px 0; }
-        .ai { color: #34d399; margin: 5px 0; }
+        #output {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+        }
     </style>
 </head>
-
 <body>
 
-<h1>AI Web Chat</h1>
+<h2>AI Chat</h2>
 
-<div id="chat"></div>
+<input id="input" placeholder="Type message...">
+<button onclick="send()">Send</button>
 
-<input id="msg" placeholder="Napiši vprašanje..." />
-<button onclick="send()">Pošlji</button>
+<div id="output"></div>
 
 <script>
 async function send() {
-    let input = document.getElementById("msg");
-    let text = input.value;
+    const message = document.getElementById("input").value;
 
-    if (!text) return;
-
-    document.getElementById("chat").innerHTML += "<div class='user'>Ti: " + text + "</div>";
-
-    input.value = "";
-
-    let res = await fetch("/chat", {
+    const res = await fetch("/chat", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({message: text})
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message })
     });
 
-    let data = await res.json();
+    const data = await res.json();
 
-    document.getElementById("chat").innerHTML += "<div class='ai'>AI: " + data.reply + "</div>";
+    let output = "";
+
+    if (data.type === "answer") {
+        output = data.content;
+    } 
+    else if (data.type === "task") {
+        output = "📌 " + data.title + "\n\n" + data.steps.map(s => "- " + s).join("\n");
+    } 
+    else {
+        output = JSON.stringify(data, null, 2);
+    }
+
+    document.getElementById("output").innerText = output;
 }
 </script>
 
