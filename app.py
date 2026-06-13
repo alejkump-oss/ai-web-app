@@ -19,20 +19,25 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    user_input = request.json["message"]
+    try:
+        user_input = request.json["message"]
 
-    messages.append({"role": "user", "content": user_input})
+        messages.append({"role": "user", "content": user_input})
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages
-    )
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages
+        )
 
-    reply = response.choices[0].message.content
+        reply = response.choices[0].message.content
 
-    messages.append({"role": "assistant", "content": reply})
+        messages.append({"role": "assistant", "content": reply})
 
-    return jsonify({"reply": reply})
+        return jsonify({"reply": reply})
+
+    except Exception as e:
+        print("ERROR:", e)
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     import os
