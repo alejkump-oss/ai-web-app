@@ -1,14 +1,14 @@
-import json
 from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+import json
 
 load_dotenv()
 
 app = Flask(__name__)
 
-api_key = os.environ.get("OPENAI_API_KEY")
+api_key = os.getenv("OPENAI_API_KEY")
 
 if not api_key:
     raise Exception("OPENAI_API_KEY ni nastavljen!")
@@ -21,29 +21,27 @@ messages = [
         "content": """
 You are an AI operating system.
 
-IMPORTANT RULE:
-You MUST respond ONLY in valid JSON.
-No text before or after JSON.
+You MUST always respond in valid JSON.
 
-You have two modes:
+Two modes:
 
-1) TASK mode:
+1) TASK:
 {
   "type": "task",
   "title": "short title",
   "steps": ["step 1", "step 2", "step 3"]
 }
 
-2) ANSWER mode:
+2) ANSWER:
 {
   "type": "answer",
-  "content": "short clear answer"
+  "content": "short clear response"
 }
 
 RULES:
-- NEVER write normal text
-- NEVER use markdown
-- ALWAYS return valid JSON
+- ONLY JSON
+- NO markdown
+- NO extra text
 """
     }
 ]
@@ -51,6 +49,7 @@ RULES:
 @app.route("/")
 def home():
     return render_template("index.html")
+
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -65,21 +64,24 @@ def chat():
         )
 
         reply = response.choices[0].message.content.strip()
-try:
-    data = json.loads(reply)
-except:
-    data = {
-        "type": "answer",
-        "content": reply}
+
+        try:
+            data = json.loads(reply)
+        except Exception:
+            data = {
+                "type": "answer",
+                "content": reply,
+                "error": "invalid_json_from_model"
+            }
+
         messages.append({"role": "assistant", "content": reply})
 
         return jsonify(data)
 
     except Exception as e:
-        print("ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
+
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
