@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Web Chat</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+            text-align: center;
+        }
+
+        #chat {
+            width: 60%;
+            margin: auto;
+            height: 400px;
+            overflow-y: scroll;
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: left;
+        }
+
+        input {
+            width: 50%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px;
+        }
+
+        .user { color: #60a5fa; margin: 5px 0; }
+        .ai { color: #34d399; margin: 5px 0; }
+    </style>
+</head>
+
+<body>
+
+<h1>AI Web Chat</h1>
+
+<div id="chat"></div>
+
+<input id="msg" placeholder="Napiši vprašanje..." />
+<button onclick="send()">Pošlji</button>
+
+<script>
+async function send() {
+    let input = document.getElementById("msg");
+    let text = input.value;
+
+    if (!text) return;
+
+    document.getElementById("chat").innerHTML += "<div class='user'>Ti: " + text + "</div>";
+
+    input.value = "";
+
+    let res = await fetch("/chat", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({message: text})
+    });
+
+    let data = await res.json();
+
+    document.getElementById("chat").innerHTML += "<div class='ai'>AI: " + data.reply + "</div>";
+}
+</script>
+
+</body>
+</html>
