@@ -15,35 +15,35 @@ if not api_key:
 
 client = OpenAI(api_key=api_key)
 
-messages = [
-    {
-        "role": "system",
-        "content": """
+SYSTEM_PROMPT = """
 You are an AI operating system.
 
-You MUST always respond in valid JSON.
+You MUST always respond in valid JSON only.
 
-Two modes:
+Return one of these formats:
 
-1) TASK:
+1) Answer:
+{
+  "type": "answer",
+  "content": "short clear response"
+}
+
+2) Task:
 {
   "type": "task",
   "title": "short title",
   "steps": ["step 1", "step 2", "step 3"]
 }
 
-2) ANSWER:
-{
-  "type": "answer",
-  "content": "short clear response"
-}
-
 RULES:
 - ONLY JSON
 - NO markdown
 - NO extra text
+- If user is unclear, still respond with type=answer
 """
-    }
+
+messages = [
+    {"role": "system", "content": SYSTEM_PROMPT}
 ]
 
 @app.route("/")
@@ -54,7 +54,13 @@ def home():
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
-        user_input = request.json["message"]
+        user_input = request.json.get("message", "")
+
+        if not user_input:
+            return jsonify({
+                "type": "answer",
+                "content": "No input provided"
+            })
 
         messages.append({"role": "user", "content": user_input})
 
@@ -65,13 +71,13 @@ def chat():
 
         reply = response.choices[0].message.content.strip()
 
+        # SAFE JSON PARSE
         try:
             data = json.loads(reply)
         except Exception:
             data = {
                 "type": "answer",
-                "content": reply,
-                "error": "invalid_json_from_model"
+                "content": reply
             }
 
         messages.append({"role": "assistant", "content": reply})
@@ -79,7 +85,10 @@ def chat():
         return jsonify(data)
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "type": "answer",
+            "content": f"Server error: {str(e)}"
+        })
 
 
 if __name__ == "__main__":
