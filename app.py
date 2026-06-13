@@ -7,7 +7,12 @@ load_dotenv()
 
 app = Flask(__name__)
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+api_key = os.environ.get("OPENAI_API_KEY")
+
+if not api_key:
+    raise Exception("OPENAI_API_KEY ni nastavljen!")
+
+client = OpenAI(api_key=api_key)
 
 messages = [
     {"role": "system", "content": "Answer clearly in the user's language."}
